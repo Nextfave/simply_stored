@@ -405,12 +405,17 @@ SimplyStored now supports eager loading. This feature helps to reduce number of 
     
 
 For finders:
+
     User.all(:eager_load => [:company]) # -> This also loads company of all users at the same time  when it fetches user objects.
 
 For associations:
+
     project.users(:eager_load => [:company])
+
+Alternatively, SimplyStored provides a helper method for the same purpose.
     
-    
+    @users = User.all    
+    SimplyStored::Couch::Helper.eager_load(@users, [:company]) 
 
 License
 =============
