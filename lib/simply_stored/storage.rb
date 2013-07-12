@@ -108,7 +108,8 @@ module SimplyStored
           :location => :us, # use :eu for European buckets
           :ca_file => nil, # point to CA file for SSL certificate verification
           :after_delete => :nothing, # or :delete to delete the item on S3 after it is deleted in the DB,
-          :logger => nil # use the default RightAws logger (stdout)
+          :logger => nil, # use the default RightAws logger (stdout)
+          :expire_after => 5.minutes
         }.update(options)
         self._s3_options ||= {}
         self._s3_options[name] = options
@@ -136,7 +137,7 @@ module SimplyStored
         
         define_method("#{name}_url") do
           if _s3_options[name][:permissions] == 'private'
-            RightAws::S3Generator.new(_s3_options[name][:access_key], _s3_options[name][:secret_access_key], :multi_thread => true, :ca_file => _s3_options[name][:ca_file]).bucket(_s3_options[name][:bucket]).get(s3_attachment_key(name), 5.minutes)
+            RightAws::S3Generator.new(_s3_options[name][:access_key], _s3_options[name][:secret_access_key], :multi_thread => true, :ca_file => _s3_options[name][:ca_file]).bucket(_s3_options[name][:bucket]).get(s3_attachment_key(name), _s3_options[name][:expire_after])
           else
             if _s3_options[name][:https]
               "https://#{_s3_options[name][:bucket].to_s}.s3.amazonaws.com/#{s3_attachment_key(name)}"
