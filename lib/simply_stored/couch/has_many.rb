@@ -19,10 +19,8 @@ module SimplyStored
               eager_load_params = eager_load_params[:eager_load]
             end
           end
-
           cached_results = send("_get_cached_#{name}")
           cache_key = _cache_key_for(local_options)
-
           if forced_reload || cached_results[cache_key].nil? 
             cached_results[cache_key] = find_associated(options[:class_name], self.class, :with_deleted => with_deleted, :limit => limit, :descending => descending, :foreign_key => options[:foreign_key], :eager_load => eager_load_params)
             instance_variable_set("@#{name}", cached_results)
@@ -156,6 +154,13 @@ module SimplyStored
             :class_name => name.to_s.singularize.camelize,
             :foreign_key => nil
           }.update(options)
+
+          owner_clazz.class_eval { cattr_accessor :foreign_keys}
+          if fk = options[:foreign_key]
+            owner_clazz.foreign_keys ||= {}
+            owner_clazz.foreign_keys[name] ||= fk
+          end
+
           @name, @options = name, options
           
           options.assert_valid_keys(:dependent, :through, :class_name, :foreign_key)
