@@ -18,11 +18,30 @@ module SimplyStored
             }
           }
         eos
+
+        eager_load_map_definition_without_deleted = <<-eos
+          function(doc) { 
+            if (doc['ruby_class'] == '#{self.to_s}' && doc['#{name.to_s}_id'] != null) {
+              if (doc['#{soft_delete_attribute}'] && doc['#{soft_delete_attribute}'] != null){
+                // "soft" deleted
+              }else{
+                emit(doc.#{name.to_s}_id, 1);
+              }
+            }
+          }
+        eos
+
         
         reduce_definition = "_sum"
          
         view "association_#{self.name.underscore}_belongs_to_#{name}",
           :map => map_definition_without_deleted,
+          :reduce => reduce_definition,
+          :type => "custom",
+          :include_docs => true
+
+        view "eager_load_association_#{self.name.underscore}_belongs_to_#{name}",
+          :map => eager_load_map_definition_without_deleted,
           :reduce => reduce_definition,
           :type => "custom",
           :include_docs => true

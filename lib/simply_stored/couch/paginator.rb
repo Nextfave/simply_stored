@@ -42,17 +42,36 @@ module SimplyStored
         params.each do |param|
           param_id = "#{param}_id".to_sym
 
-          raise ArgumentError, "No such relation: #{param}" unless results.first.respond_to?(param_id)
-          
-          param_ids = results.map(&param_id)
-          objs = CouchPotato.database.load param_ids.compact
-          grouped_objs = objs.group_by(&:id)
+          raise ArgumentError, "No such relation: #{param}" unless results.first.respond_to?(param)
+          if results.first.respond_to?(param_id) 
+            param_ids = results.map(&param_id)
+            objs = CouchPotato.database.load param_ids.compact
+            grouped_objs = objs.group_by(&:id)
 
-          results.each do |result|
-            result.send("#{param}=", grouped_objs[result.send(param_id)].try(:first) ) if result.send(param_id)
+            results.each do |result|
+              result.send("#{param}=", grouped_objs[result.send(param_id)].try(:first) ) if result.send(param_id)
+            end
+          else
+            from =  param.to_s.singularize
+            from_class = from.humanize.constantize
+            to = results.first.class
+            foreign_key_id = to.foreign_keys[param]
+            foreign_key = foreign_key_id.gsub(/_id$/, '')
+            view_options = {:include_docs=>true, :reduce=>false, :keys => results.map(&:id)}
+            objs = CouchPotato.database.view(from_class.send("eager_load_association_#{from.underscore}_belongs_to_#{foreign_key}", view_options) )
+            grouped_objs = objs.group_by(&foreign_key_id.to_sym)
+
+            results.each do |result|
+              result.instance_eval do
+                cache_key = _cache_key_for(nil)
+                eager_loaded_results = grouped_objs[result.id]
+                send("_set_cached_#{param}", (eager_loaded_results || []), cache_key)
+                #result.class.set_parent_has_many_association_object(result, eager_loaded_results[cache_key])
+              end
+            end
           end
-
         end
+        results
 
       end    
     end
