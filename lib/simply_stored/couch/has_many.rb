@@ -11,7 +11,6 @@ module SimplyStored
           options[:class_name].constantize.page_params = args.first if args.first.is_a? Hash
           local_options = args.first && args.first.is_a?(Hash) && args.first
           forced_reload, with_deleted, limit, descending = extract_association_options(local_options)
-
           eager_load_params = nil
           args.each do |arg| 
             if arg[:eager_load]
@@ -155,10 +154,16 @@ module SimplyStored
             :foreign_key => nil
           }.update(options)
 
-          owner_clazz.class_eval { cattr_accessor :foreign_keys}
+          owner_clazz.class_eval { cattr_accessor :foreign_keys, :association_classes}
+
           if fk = options[:foreign_key]
             owner_clazz.foreign_keys ||= {}
             owner_clazz.foreign_keys[name] ||= fk
+          end
+
+          if association_class = options[:class_name]
+            owner_clazz.association_classes ||= {}
+            owner_clazz.association_classes[name] ||= association_class
           end
 
           @name, @options = name, options
