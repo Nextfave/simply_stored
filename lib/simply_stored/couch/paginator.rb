@@ -52,13 +52,13 @@ module SimplyStored
               result.send("#{param}=", grouped_objs[result.send(param_id)].try(:first) ) if result.send(param_id)
             end
           else
-            from =  param.to_s.singularize
-            from_class = from.humanize.constantize
             to = results.first.class
-            foreign_key_id = to.foreign_keys[param]
+            from_class = to.association_classes[param].constantize
+            from =  from_class.to_s.underscore
+            foreign_key_id = (to.foreign_keys && to.foreign_keys[param]) || to.foreign_key
             foreign_key = foreign_key_id.gsub(/_id$/, '')
             view_options = {:include_docs=>true, :reduce=>false, :keys => results.map(&:id)}
-            objs = CouchPotato.database.view(from_class.send("eager_load_association_#{from.underscore}_belongs_to_#{foreign_key}", view_options) )
+            objs = CouchPotato.database.view(from_class.send("eager_load_association_#{from}_belongs_to_#{foreign_key}", view_options) )
             grouped_objs = objs.group_by(&foreign_key_id.to_sym)
 
             results.each do |result|
@@ -66,7 +66,7 @@ module SimplyStored
                 cache_key = _cache_key_for(nil)
                 eager_loaded_results = grouped_objs[result.id]
                 send("_set_cached_#{param}", (eager_loaded_results || []), cache_key)
-                #result.class.set_parent_has_many_association_object(result, eager_loaded_results[cache_key])
+                #result.class.set_parent_has_many_association_object(result, eager_loaded_results)
               end
             end
           end
