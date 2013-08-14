@@ -36,14 +36,14 @@ module SimplyStored
       end
 
       def self.eager_load(results, params)
-
+        results.compact!
         return if results.empty?
-        
+
         params.each do |param|
           param_id = "#{param}_id".to_sym
 
           raise ArgumentError, "No such relation: #{param}" unless results.first.respond_to?(param)
-          if results.first.respond_to?(param_id) 
+          if results.first.respond_to?(param_id)
             param_ids = results.map(&param_id)
             objs = CouchPotato.database.load param_ids.compact
             grouped_objs = objs.group_by(&:id)
@@ -73,7 +73,7 @@ module SimplyStored
         end
         results
 
-      end    
+      end
     end
 
   end
