@@ -33,14 +33,16 @@ module SimplyStored
 
         
         reduce_definition = "_sum"
-         
-        view "association_#{self.name.underscore}_belongs_to_#{name}",
+
+        underscored = self.name.gsub('::','_').underscore
+
+        view "association_#{underscored}_belongs_to_#{name}",
           :map => map_definition_without_deleted,
           :reduce => reduce_definition,
           :type => "custom",
           :include_docs => true
 
-        view "eager_load_association_#{self.name.underscore}_belongs_to_#{name}",
+        view "eager_load_association_#{underscored}_belongs_to_#{name}",
           :map => eager_load_map_definition_without_deleted,
           :reduce => reduce_definition,
           :type => "custom",
@@ -54,7 +56,7 @@ module SimplyStored
           }
         eos
          
-        view "association_#{self.name.underscore}_belongs_to_#{name}_with_deleted",
+        view "association_#{underscored}_belongs_to_#{name}_with_deleted",
           :map => map_definition_with_deleted,
           :reduce => reduce_definition,
           :type => "custom",
