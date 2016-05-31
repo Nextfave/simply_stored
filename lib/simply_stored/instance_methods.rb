@@ -220,7 +220,8 @@ module SimplyStored
               else 
                 # nullify
                 unless dependent.class.soft_deleting_enabled? && dependent.deleted?
-                  dependent.send("#{self.class.foreign_property}=", nil)
+                  foreign_key = property.options[:foreign_key] || self.class.foreign_property
+                  dependent.send("#{foreign_key}=", nil)
                   dependent.save(false)
                 end
               end
